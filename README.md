@@ -1,15 +1,17 @@
-# Contribution [1]: [TBD]
+# Contribution [1]: [Cannot parse custom colors whose .colorset uses Hex values]
 
 **Contribution Number:** [1]  
 **Student:** [Harsh Sabu]  
-**Issue:** [GitHub issue link]  
-**Status:** [Phase I] [In Progress]
+**Issue:** [[GitHub issue link](https://github.com/skiptools/skip-ui/issues/146)]  
+**Status:** [Phase I] [Complete]
 
 ---
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs explaining why this issue interests you, how it matches your skills/learning goals, what you hope to learn]
+[I picked this issue because it feels like the right level of challenge for my first real open-source contribution. I’m not trying to jump into a huge feature right away, and this bug seems specific enough for me to understand, reproduce, and work through carefully. The issue is about `.colorset` files using hex color values, which makes sense to me because it sounds like a parsing problem rather than a full app architecture problem.
+
+I also like that this issue gives me a chance to get more comfortable reading Swift code in a real project. I have some programming experience, but I’m still learning how larger codebases are organized, so I wanted an issue where I could focus on tracing one behavior and making a targeted fix. My goal is to understand why decimal color values work, but hex values do not.]
 
 ---
 
@@ -17,19 +19,19 @@
 
 ### Problem Description
 
-[In your own words, what's broken or missing?]
+[Some custom color assets are not being read correctly when their `.colorset` files store color components as hex values instead of regular decimal values. From the issue, it seems like decimal values work, but hex values may fail during parsing and cause the color to show up incorrectly. I still need to reproduce this myself in Phase II, but my current understanding is that the bug is probably happening in the color parsing logic.]
 
 ### Expected Behavior
 
-[What should happen?]
+[A custom color should load correctly whether the `.colorset` stores its component values as decimals or hex values.]
 
 ### Current Behavior
 
-[What actually happens?]
+[When the `.colorset` uses hex values, the color does not appear to parse correctly and may render as the wrong color.]
 
 ### Affected Components
 
-[Which parts of the codebase are involved?]
+[It is likely the color asset parsing code, especially wherever `.colorset` component values are converted into usable color values. I’ll confirm the exact files once I set up and reproduce the issue in Phase II.]
 
 ---
 
