@@ -3,7 +3,7 @@
 **Contribution Number:** [1]  
 **Student:** [Harsh Sabu]  
 **Issue:** [[GitHub issue link](https://github.com/skiptools/skip-ui/issues/146)]  
-**Status:** [Phase I] [Complete]
+**Status:** [Phase 3] [Complete]
 
 ---
 
@@ -129,38 +129,129 @@ https://github.com/haaaaaaarshs/skip-ui/tree/fix-issue-146
 
 ## Testing Strategy
 
-### Unit Tests
+### Local Test Command
 
-- [ ] Test case 1: [Description]
-- [ ] Test case 2: [Description]
-- [ ] Test case 3: [Description]
+I ran the project test suite locally with:
 
-### Integration Tests
+```bash
+swift test
+```
 
-- [ ] Integration scenario 1
-- [ ] Integration scenario 2
+Final result:
 
-### Manual Testing
+```text
+JUNIT SUITES 7 TESTS 60 PASSED 58 (97.0%) FAILED 0 SKIPPED 2
+Completed gradle test run for local
+```
 
-[What you tested manually and results]
+The test run completed successfully with **0 failures**. The Gradle/JUnit portion reported 7 test suites, 60 tests, 58 passed, 0 failed, and 2 skipped.
+
+### Validation Performed
+
+I validated that the implementation handles the original issue scenario and preserves existing behavior:
+
+- Hexadecimal component strings like `"0x94"`, `"0x11"`, and `"0xBB"` are now recognized.
+- Hex values are converted into normalized color component values by dividing by `255.0`.
+- Decimal component strings like `"1.000"` still parse through the existing `Double(...)` path.
+- Invalid or missing RGB values still fall back to `0.0`.
+- Invalid or missing alpha values still fall back to `1.0`.
+- The full project test run completed with no failures after the implementation was updated.
+
+### Build and Environment Issues Resolved
+
+Getting the test suite to pass required more work than expected because SkipUI builds through both Swift and Skip's generated Kotlin/Gradle path. During testing, I ran into several setup and build issues:
+
+1. The first `swift test` attempt failed while downloading the Skip macOS binary artifact.
+2. After retrying, the build reached the test harness but initially failed because the local toolchain could not find `XCTest`.
+3. After fixing the Xcode command-line tool setup, the build progressed further but failed because `gradle` was not installed.
+4. After installing Gradle, the generated Android/Gradle test path failed because Android SDK configuration was missing.
+5. After setting up Android Studio, SDK tools, command-line tools, and SDK environment variables, the test run progressed further.
+6. The build then failed because my Mac ran out of disk space during Gradle/Kotlin compilation.
+7. After clearing generated build files and freeing disk space, the full test run completed successfully with 0 failures.
+
+This process helped confirm that the final code change was not only valid Swift, but also compatible with SkipUI's generated Kotlin build path.
 
 ---
 
 ## Implementation Notes
 
-### Week [X] Progress
+### Phase III Build Progress
 
-[What you built this week, challenges faced, decisions made]
+For Phase III, I implemented the planned fix for SkipUI Issue #146: custom `.colorset` files were not being parsed correctly when Xcode stored RGB component values as hexadecimal strings such as `"0x94"`, `"0x11"`, and `"0xBB"`.
 
-### Week [Y] Progress
+The original parsing logic in `Sources/SkipUI/SkipUI/Color/Color.swift` converted color components directly with `Double(...)`. That worked for decimal values like `"1.000"`, but failed for hexadecimal strings. When the parse failed, the RGB values fell back to `0.0`, which caused the custom color to render incorrectly.
 
-[Continue documenting as you work]
+I updated the private `ColorComponents` parsing logic so it now supports both existing decimal component values and Xcode's 8-bit hexadecimal component format. The final implementation:
+
+- Keeps the existing decimal parsing behavior for values like `"1.000"`.
+- Detects component strings with a `0x` or `0X` prefix.
+- Converts hexadecimal digits manually into an integer value.
+- Normalizes the 8-bit color value by dividing by `255.0`.
+- Preserves the existing fallback behavior:
+  - Missing or invalid RGB values fall back to `0.0`.
+  - Missing or invalid alpha values fall back to `1.0`.
+
+### Files Modified
+
+- `Sources/SkipUI/SkipUI/Color/Color.swift`
+
+### Implementation Details
+
+My first implementation used Swift's built-in radix initializer:
+
+```swift
+Int(hexValue, radix: 16)
+```
+
+That worked conceptually for Swift, but it failed during the Skip/Kotlin build because the Swift-to-Kotlin transpilation path did not translate that initializer cleanly. The generated Kotlin code produced errors around the `Int` constructor and the `radix` parameter.
+
+To fix that, I rewrote the hex parsing in a more explicit and Skip-compatible way. I added a helper that maps each hexadecimal character (`0`-`9`, `a`-`f`, `A`-`F`) to its integer value, then loops through the string and builds the final integer manually:
+
+```swift
+intValue = intValue * 16 + digit
+```
+
+This made the change more verbose, but it also made the logic clearer and compatible with the project's Swift-to-Kotlin build path.
+
+### Challenges Faced
+
+The biggest challenge was realizing that a normal Swift solution was not automatically the right solution for this project. My first approach used `Int(hexValue, radix: 16)`, which is the natural Swift way to parse a hexadecimal string. However, SkipUI also transpiles Swift into Kotlin, and the generated Kotlin did not support that initializer correctly.
+
+Instead of treating that as just a test failure, I used the error to revise the implementation. I replaced the built-in radix initializer with manual hexadecimal parsing so the logic would be simple enough for Skip's translation path.
+
+Another challenge was getting the full test environment working locally. The fix itself was small, but validating it required setting up and troubleshooting the Skip binary artifact download, Xcode command-line tools, Gradle, Android Studio, Android SDK tools, and local disk space. That took significantly longer than the code change, but it gave me a better understanding of how this project's Swift and Kotlin build systems connect.
 
 ### Code Changes
 
-- **Files modified:** [List]
-- **Key commits:** [Links to important commits]
-- **Approach decisions:** [Why you chose certain approaches]
+- **Files modified:** `Sources/SkipUI/SkipUI/Color/Color.swift`
+- **Branch:** https://github.com/haaaaaaarshs/skip-ui/tree/fix-issue-146
+- **Key commit:** https://github.com/haaaaaaarshs/skip-ui/commit/a5072f6
+- **Commit message:** `Fix hex color component parsing`
+
+### Approach Decisions
+
+- I kept the change scoped to `ColorComponents` instead of changing the broader color asset loading flow.
+- I preserved the existing decimal parsing behavior to avoid breaking `.colorset` files that already worked.
+- I avoided `Int(hexValue, radix: 16)` after discovering that it failed in Skip's Kotlin transpilation path.
+- I used manual hex parsing so the logic would be explicit, readable, and compatible with both Swift and the generated Kotlin build.
+
+---
+
+## Learnings & Reflections
+
+This phase taught me that open source fixes are not only about writing the smallest code change. They are also about understanding the project's build system, testing path, and platform constraints.
+
+The main technical lesson was that SkipUI is not a normal Swift-only project. A change can make sense in Swift but still fail if it does not translate cleanly into Kotlin. Because of that, I had to think about implementation compatibility across both sides of the project.
+
+The main workflow lesson was to test incrementally and read the errors carefully. Each failure showed a different layer of the project: dependency downloads, XCTest, Gradle, Android SDK setup, disk space, and finally the actual Swift-to-Kotlin compatibility issue. By working through each one, I was able to end Phase III with a pushed implementation and a passing local test run.
+
+---
+
+## Phase III Status
+
+Status: Complete
+
+I implemented the fix, pushed the working branch to my fork, validated the change with `swift test`, and documented the implementation, testing strategy, challenges, and final commit.
 
 ---
 
