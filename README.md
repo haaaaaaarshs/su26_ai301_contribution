@@ -3,7 +3,7 @@
 **Contribution Number:** [1]  
 **Student:** [Harsh Sabu]  
 **Issue:** [[GitHub issue link](https://github.com/skiptools/skip-ui/issues/146)]  
-**Status:** [Phase 4] [Complete]
+**Status:** [Phase 4] [Awaiting review / CLA pending / collaboration in progress]
 
 ---
 
