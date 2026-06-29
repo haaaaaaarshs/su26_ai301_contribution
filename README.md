@@ -3,7 +3,7 @@
 **Contribution Number:** [1]  
 **Student:** [Harsh Sabu]  
 **Issue:** [[GitHub issue link](https://github.com/skiptools/skip-ui/issues/146)]  
-**Status:** [Phase 3] [Complete]
+**Status:** [Phase 4] [Complete]
 
 ---
 
@@ -141,7 +141,7 @@ Final result:
 
 ```text
 JUNIT SUITES 7 TESTS 60 PASSED 58 (97.0%) FAILED 0 SKIPPED 2
-Completed gradle test run for local
+Completed Gradle test run for local
 ```
 
 The test run completed successfully with **0 failures**. The Gradle/JUnit portion reported 7 test suites, 60 tests, 58 passed, 0 failed, and 2 skipped.
@@ -164,7 +164,7 @@ Getting the test suite to pass required more work than expected because SkipUI b
 1. The first `swift test` attempt failed while downloading the Skip macOS binary artifact.
 2. After retrying, the build reached the test harness but initially failed because the local toolchain could not find `XCTest`.
 3. After fixing the Xcode command-line tool setup, the build progressed further but failed because `gradle` was not installed.
-4. After installing Gradle, the generated Android/Gradle test path failed because Android SDK configuration was missing.
+4. After installing Gradle, the generated Android/Gradle test path failed because the Android SDK configuration was missing.
 5. After setting up Android Studio, SDK tools, command-line tools, and SDK environment variables, the test run progressed further.
 6. The build then failed because my Mac ran out of disk space during Gradle/Kotlin compilation.
 7. After clearing generated build files and freeing disk space, the full test run completed successfully with 0 failures.
@@ -257,15 +257,16 @@ I implemented the fix, pushed the working branch to my fork, validated the chang
 
 ## Pull Request
 
-**PR Link:** [GitHub PR URL when submitted]
-
-**PR Description:** [Draft or final PR description - much of the content above can be adapted]
+**PR Link:** https://github.com/skiptools/skip-ui/pull/471
+**PR Description:** This PR fixes `.colorset` parsing for hexadecimal color component values such as `"0x94"` and `"0XFF"`. The existing parser attempted to parse every color component using `Double(...)`, which works for normalized decimal values like `"1.000"` but fails for hex strings. My change adds support for `0x` / `0X` hex component strings by converting 8-bit channel values into normalized `Double` values between 0 and 1, while preserving the existing decimal parsing behavior.
 
 **Maintainer Feedback:**
-- [Date]: [Summary of feedback received]
-- [Date]: [How you addressed it]
+- June 22: Opened PR #471 to `skiptools/skip-ui` for issue #146.
+- June 22: The project workflow check passed successfully, and the branch has no merge conflicts with `skiptools:main`.
+- June 22: The CLA bot flagged that my GitHub username was not yet listed in Skip’s `.clabot` file. I opened a separate CLA PR to add my username: https://github.com/skiptools/clabot-config/pull/72
+- As of now, there has not been maintainer code review yet. The PR is awaiting review, with the remaining blocker being CLA verification/paperwork.
 
-**Status:** [Awaiting review / Iterating / Approved / Merged]
+**Status:** Awaiting review / CLA pending / collaboration in progress
 
 ---
 
@@ -273,20 +274,28 @@ I implemented the fix, pushed the working branch to my fork, validated the chang
 
 ### Technical Skills Gained
 
-[What you learned technically]
+Through this phase, I learned more about how Swift asset catalog `.colorset` files store color components and how the existing SkipUI parser handled those values. The bug came from the parser using `Double(...)` directly, which works for decimal strings but fails for hex strings like `"0x94"`.
+My implementation added a focused parsing path for `0x` / `0X` hex component values while keeping the previous decimal behavior unchanged. I also learned more about keeping an open source fix scoped to the actual reported issue instead of expanding the solution into a broader parser redesign.
+I used Claude Code as a reviewer, not as the author of the solution. Claude reviewed the committed branch diff and confirmed that the hex parsing fix was scoped, additive, and safe to submit as a minimal PR. It also pointed out that bare decimal 8-bit values like `"255"` may be a separate pre-existing limitation, but expanding into every possible 8-bit format could broaden the scope beyond the original issue.
 
 ### Challenges Overcome
 
-[What was hard and how you solved it]
+The biggest challenge in this phase was not only technical, but also collaborative. Another student, Arul, also ended up working on the same issue. I had originally commented on the GitHub issue and selected it in Slack, but I was not able to claim it in the Google Doc at the time because of traffic. Arul had also posted his progress in Slack and later opened a PR for the same issue.
+At first, we both explained our timelines and considered asking the course staff to make a decision. After speaking with Margaret Fero and discussing it with each other, we decided to handle the overlap professionally and work together instead of treating the PRs as competing submissions.
+The current plan is to combine the strengths of both approaches: keeping the parsing solution simple and focused while also considering Arul’s stronger test coverage and edge-case planning.
 
 ### What I'd Do Differently Next Time
 
-[Reflection on your process]
+Next time, I would document issue selection more clearly across every required channel as soon as possible. Even though I commented on the GitHub issue and posted in Slack, not getting my claim into the Google Doc created confusion later.
+I would also communicate earlier when I notice a possible overlap. This experience taught me that open source contribution is not just about writing code. It also involves coordination, transparency, and handling disagreements professionally.
 
 ---
 
 ## Resources Used
 
-- [Link to helpful documentation]
-- [Tutorial or Stack Overflow post that helped]
-- [GitHub issues or discussions that helped]
+- GitHub issue #146: https://github.com/skiptools/skip-ui/issues/146
+- My PR #471: https://github.com/skiptools/skip-ui/pull/471
+- CLA PR #72: https://github.com/skiptools/clabot-config/pull/72
+- Skip contribution guide: https://skip.dev/docs/contributing/
+- Claude Code review for final implementation review and scope check
+- Slack discussion with Arul and guidance from Margaret Fero
