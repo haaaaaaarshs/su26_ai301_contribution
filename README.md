@@ -1,9 +1,80 @@
+# AI301 Open Source Contribution Progress Journal
+
+## Contribution [2]: [`assetAccentColor` doesn't search for `AccentColor` in my module's bundle]
+
+**Contribution Number:** [2]
+**Student:** [Harsh Sabu]
+**Issue:** [skiptools/skip-ui#431](https://github.com/skiptools/skip-ui/issues/431)
+**Status:** [Phase I] [Pending CodePath approval]
+
+---
+
+## Week 5 Check-In
+
+For Week 5, I began the issue selection process for my second contribution cycle.
+
+After my first contribution to SkipUI was successfully merged, I wanted to stay with the same project instead of starting over in a completely unfamiliar codebase. CodePath encouraged us to consider issues from a project's existing issue list, especially when continuing with the same project, or maintainers could help us build stronger open-source relationships.
+
+I found SkipUI Issue #431, which reports that `assetAccentColor` searches `Bundle.main` instead of the module bundle where the documentation tells developers to place the Android `AccentColor` resource.
+
+Because Issue #431 is not part of the provided CodePath issue spreadsheet, I posted in the course Slack channel asking an instructor or TA to review the issue and confirm that it is appropriate for the course. I also commented on the GitHub issue to express interest and explain that I recently contributed to the same general area of SkipUI's color and asset code.
+
+At the time of this Week 5 check-in, the issue is **pending CodePath approval**. I have not treated it as my officially approved second issue or started implementation yet.
+
+---
+
+## Why I Am Interested in This Issue
+
+My first contribution involved fixing how SkipUI parses hexadecimal component values from `.colorset` files. That work required me to spend time in `Color.swift` and understand part of the project's color asset loading flow.
+
+Issue #431 stood out because it builds on that experience without repeating the same type of problem. My first fix was focused on parsing the values inside a color asset. This issue appears to move one level outward into understanding how SkipUI finds the correct asset resource and bundle in the first place.
+
+I also wanted to continue contributing to SkipUI while the repository structure, development workflow, and lessons from my first contribution are still familiar to me. My goal for the second cycle is to use that familiarity to take on a problem that requires a deeper understanding of the surrounding system.
+
+---
+
+## Initial Understanding of the Issue
+
+SkipUI's documentation tells developers that an Android `AccentColor` resource can be placed in the application module's resource catalog.
+
+The issue report points out that the current `assetAccentColor` implementation searches for the asset using `Bundle.main`. According to the report, this means a developer can follow the documented resource setup but still have the generated Android application fail to find the `AccentColor` because the implementation is searching a different bundle.
+
+My initial investigation suggests that the relevant areas may include:
+
+* `Sources/SkipUI/SkipUI/Color/Color.swift`
+* `assetAccentColor`
+* `AssetKey`
+* `namedColorCache`
+* `assetColorInfo`
+* module bundle and resource lookup behavior
+
+I am intentionally not assuming that the solution is simply to replace `Bundle.main` with another value. If the issue is approved, I first want to reproduce the behavior and understand how other named colors and module resources locate the correct bundle.
+
+---
+
+## Next Steps
+
+If CodePath approves Issue #431, I will begin Phase II by:
+
+1. Updating my local fork with the latest SkipUI `main` branch.
+2. Creating a new branch specifically for Issue #431.
+3. Reproducing the documented `AccentColor` lookup problem.
+4. Tracing how regular named colors resolve their bundles.
+5. Investigating how other parts of SkipUI locate application module resources.
+6. Documenting the root cause before beginning implementation.
+
+If CodePath does not approve the issue, I will select another issue and update this journal accordingly.
+
+---
+
 # Contribution [1]: [Cannot parse custom colors whose .colorset uses Hex values]
 
 **Contribution Number:** [1]  
 **Student:** [Harsh Sabu]  
 **Issue:** [[GitHub issue link](https://github.com/skiptools/skip-ui/issues/146)]  
-**Status:** [Phase 4] [Awaiting review / CLA pending / collaboration in progress]
+**Status:** [Phase IV] [Complete - Merged July 1, 2026]
+
+Outcome: My fix was accepted and merged into skiptools/skip-ui:main.
 
 ---
 
@@ -257,16 +328,36 @@ I implemented the fix, pushed the working branch to my fork, validated the chang
 
 ## Pull Request
 
-**PR Link:** https://github.com/skiptools/skip-ui/pull/471
-**PR Description:** This PR fixes `.colorset` parsing for hexadecimal color component values such as `"0x94"` and `"0XFF"`. The existing parser attempted to parse every color component using `Double(...)`, which works for normalized decimal values like `"1.000"` but fails for hex strings. My change adds support for `0x` / `0X` hex component strings by converting 8-bit channel values into normalized `Double` values between 0 and 1, while preserving the existing decimal parsing behavior.
+**PR Link:** [skiptools/skip-ui#471](https://github.com/skiptools/skip-ui/pull/471)
 
-**Maintainer Feedback:**
-- June 22: Opened PR #471 to `skiptools/skip-ui` for issue #146.
-- June 22: The project workflow check passed successfully, and the branch has no merge conflicts with `skiptools:main`.
-- June 22: The CLA bot flagged that my GitHub username was not yet listed in Skip’s `.clabot` file. I opened a separate CLA PR to add my username: https://github.com/skiptools/clabot-config/pull/72
-- As of now, there has not been maintainer code review yet. The PR is awaiting review, with the remaining blocker being CLA verification/paperwork.
+**Final Status:** Merged into `skiptools/skip-ui:main` on July 1, 2026
 
-**Status:** Awaiting review / CLA pending / collaboration in progress
+### PR Summary
+
+This PR fixed `.colorset` parsing for hexadecimal color component values such as `"0x94"` and `"0XFF"`. The existing parser attempted to parse every color component using `Double(...)`, which works for normalized decimal values like `"1.000"` but fails for hexadecimal component strings.
+
+My change added support for `0x` / `0X` hexadecimal component strings by converting 8-bit channel values into normalized `Double` values between 0 and 1, while preserving the existing decimal parsing behavior.
+
+### Review and Merge Timeline
+
+* **June 22:** Opened PR #471 for SkipUI Issue #146.
+* The project workflow completed successfully, and the branch had no merge conflicts with `skiptools:main`.
+* The CLA bot initially flagged that my GitHub username was not listed in Skip's `.clabot` file.
+* I worked through the CLA process by contributing the required username update to Skip's CLA configuration repository.
+* During the review period, I also discovered that another CodePath student had independently worked on the same issue. We communicated directly and tried to handle the overlap professionally rather than treating the situation as a competition.
+* **July 1:** Maintainer Marc Prud'hommeaux reviewed my PR and responded, "Looks good, thanks!"
+* **July 1:** Marc merged PR #471 into `skiptools:main`.
+* The overlapping PR was later closed after the maintainer determined that PR #471 had already addressed the issue, while noting that some additional testing ideas could still be useful for future improvements.
+
+### Final Outcome
+
+This was my first merged contribution to an external open-source project.
+
+The experience ended up involving much more than the original code change. I had to work through a cross-platform build system, Swift-to-Kotlin transpilation constraints, local environment setup, CLA requirements, a duplicate-contribution situation with another student, and finally, maintainer review.
+
+The fact that the PR was merged made the challenges worthwhile, but the most valuable part of the experience was seeing how technical work, communication, documentation, and collaboration all affect whether an open-source contribution actually reaches the project.
+
+**Status:** Complete — Merged
 
 ---
 
@@ -282,7 +373,9 @@ I used Claude Code as a reviewer, not as the author of the solution. Claude revi
 
 The biggest challenge in this phase was not only technical, but also collaborative. Another student, Arul, also ended up working on the same issue. I had originally commented on the GitHub issue and selected it in Slack, but I was not able to claim it in the Google Doc at the time because of traffic. Arul had also posted his progress in Slack and later opened a PR for the same issue.
 At first, we both explained our timelines and considered asking the course staff to make a decision. After speaking with Margaret Fero and discussing it with each other, we decided to handle the overlap professionally and work together instead of treating the PRs as competing submissions.
-The current plan is to combine the strengths of both approaches: keeping the parsing solution simple and focused while also considering Arul’s stronger test coverage and edge-case planning.
+The current plan is to combine the strengths of both approaches: keeping the parsing solution simple and focused while also considering Arul’s stronger test coverage and edge-case planning. 
+
+Update: In the end, our PRs were not combined. Marc merged my PR #471, then closed the overlapping PR because my merged fix had addressed the issue, while noting that some of its additional testing ideas might still be useful.
 
 ### What I'd Do Differently Next Time
 
