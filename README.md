@@ -5,7 +5,7 @@
 **Contribution Number:** [2]
 **Student:** [Harsh Sabu]
 **Issue:** [skiptools/skip-ui#431](https://github.com/skiptools/skip-ui/issues/431)
-**Status:** [Phase I] [Pending CodePath approval]
+**Status:** [Phase I Complete] [Phase II In Progress]
 
 ---
 
@@ -20,6 +20,16 @@ I found SkipUI Issue #431, which reports that `assetAccentColor` searches `Bundl
 Because Issue #431 is not part of the provided CodePath issue spreadsheet, I posted in the course Slack channel asking an instructor or TA to review the issue and confirm that it is appropriate for the course. I also commented on the GitHub issue to express interest and explain that I recently contributed to the same general area of SkipUI's color and asset code.
 
 At the time of this Week 5 check-in, the issue is **pending CodePath approval**. I have not treated it as my officially approved second issue or started implementation yet.
+
+## Issue Approval Update
+
+On July 8, 2026, my CodePath instructor reviewed and approved SkipUI Issue #431 for my second contribution cycle.
+
+Because the issue came from SkipUI's existing issue list rather than the provided CodePath spreadsheet, I waited for course approval before officially moving forward with it. Now that the issue has been approved, Phase I is complete, and I am beginning Phase II.
+
+The issue is still open, and I have already commented on the GitHub issue to express interest. My next goal is to move quickly through reproduction and root-cause analysis so I can begin implementation without stretching this contribution across the rest of the course.
+
+I would like to complete Issue #431 early enough to attempt another SkipUI contribution before the course ends. My current plan is to finish this issue first and then, if it is still available, investigate Issue #246 as a possible third contribution.
 
 ---
 
@@ -51,22 +61,34 @@ My initial investigation suggests that the relevant areas may include:
 I am intentionally not assuming that the solution is simply to replace `Bundle.main` with another value. If the issue is approved, I first want to reproduce the behavior and understand how other named colors and module resources locate the correct bundle.
 
 ---
+## Phase II Plan
 
-## Next Steps
+Now that Issue #431 has been approved, I will begin the reproduction and planning phase.
 
-If CodePath approves Issue #431, I will begin Phase II by:
+My immediate steps are:
 
-1. Updating my local fork with the latest SkipUI `main` branch.
-2. Creating a new branch specifically for Issue #431.
-3. Reproducing the documented `AccentColor` lookup problem.
-4. Tracing how regular named colors resolve their bundles.
-5. Investigating how other parts of SkipUI locate application module resources.
-6. Documenting the root cause before beginning implementation.
+1. Update my local SkipUI fork with the latest changes from `skiptools/skip-ui:main`.
+2. Create a dedicated branch for Issue #431.
+3. Confirm that the current implementation still searches for `AccentColor` using `Bundle.main`.
+4. Trace how regular named colors resolve a module bundle when using `Color(_:bundle:)`.
+5. Investigate how Skip and Swift Package Manager expose module resources through `Bundle.module`.
+6. Determine how `assetAccentColor` can access the correct application module bundle without making assumptions that break other SkipUI users.
+7. Identify an appropriate way to reproduce and test the bug before changing the implementation.
 
-If CodePath does not approve the issue, I will select another issue and update this journal accordingly.
+### Questions I Need to Answer
+
+Before writing the fix, I want to understand:
+
+* Why does `assetAccentColor` currently use `Bundle.main`?
+* Where is `assetAccentColor` called, and what context is available at that point?
+* How does a normal named color receive the correct module bundle?
+* Can the application module bundle be passed into the accent-color lookup flow?
+* Does the cache key also need to use the correct bundle?
+* Is there an existing SkipUI test application or test fixture where an `AccentColor` resource can be added for reproduction?
+
+I will document the root cause and proposed implementation before moving into Phase III.
 
 ---
-
 # Contribution [1]: [Cannot parse custom colors whose .colorset uses Hex values]
 
 **Contribution Number:** [1]  
@@ -371,11 +393,13 @@ I used Claude Code as a reviewer, not as the author of the solution. Claude revi
 
 ### Challenges Overcome
 
-The biggest challenge in this phase was not only technical, but also collaborative. Another student, Arul, also ended up working on the same issue. I had originally commented on the GitHub issue and selected it in Slack, but I was not able to claim it in the Google Doc at the time because of traffic. Arul had also posted his progress in Slack and later opened a PR for the same issue.
-At first, we both explained our timelines and considered asking the course staff to make a decision. After speaking with Margaret Fero and discussing it with each other, we decided to handle the overlap professionally and work together instead of treating the PRs as competing submissions.
-The current plan is to combine the strengths of both approaches: keeping the parsing solution simple and focused while also considering Arul’s stronger test coverage and edge-case planning. 
+The biggest challenge in this phase was not only technical, but also collaborative. Another CodePath student, Arul, independently worked on the same issue. I had commented on the GitHub issue and posted my selection in Slack, while Arul had also documented his progress and later opened a separate PR.
 
-Update: In the end, our PRs were not combined. Marc merged my PR #471, then closed the overlapping PR because my merged fix had addressed the issue, while noting that some of its additional testing ideas might still be useful.
+At first, we both explained our timelines and considered asking the course staff to decide how to handle the overlap. After speaking with Margaret Fero and communicating directly with each other, we chose to handle the situation professionally rather than treating it as a competition.
+
+In the end, the two PRs were not combined. Marc merged my PR #471, and the overlapping PR was later closed because the issue had already been addressed. The maintainer noted that some of the additional testing ideas from the other approach could still be useful in future work.
+
+The experience taught me that collaboration in open source does not always mean combining code into one solution. Sometimes it means communicating clearly, respecting each other's work, and allowing the maintainer to make the final technical decision.
 
 ### What I'd Do Differently Next Time
 
