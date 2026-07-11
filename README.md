@@ -5,7 +5,7 @@
 **Contribution Number:** [2]  
 **Student:** [Harsh Sabu]  
 **Issue:** [skiptools/skip-ui#431](https://github.com/skiptools/skip-ui/issues/431)  
-**Status:** [Phase II Complete] [Ready for Phase III]
+**Status:** [Phase III In Progress]
 
 ---
 
@@ -280,6 +280,50 @@ swift test
 ```
 
 I will also check whether the implementation clearly explains how app module resources can reach the `AccentColor` lookup path.
+
+## Phase III Implementation Progress
+
+After completing Phase II, I began implementing the fix for Issue #431 on the `fix-issue-431` branch.
+
+The first implementation checkpoint focused on making the `AccentColor` asset lookup path accept a supplied bundle instead of always using `Bundle.main`.
+
+### Files Modified
+
+```text
+Sources/SkipUI/SkipUI/Color/Color.swift
+Sources/SkipUI/SkipUI/Color/ColorScheme.swift
+Sources/SkipUI/SkipUI/Containers/PresentationRoot.swift
+```
+
+## Implementation Summary
+
+In `Color.swift`, I updated `assetAccentColor` so it accepts a `Bundle` parameter with `Bundle.main` as the default value. The function now uses the supplied bundle in both the `AssetKey` cache and the `assetColorInfo` lookup.
+
+In `ColorScheme.swift`, I updated `asMaterialTheme` so it can receive an `accentColorBundle` and pass that bundle into `Color.assetAccentColor(...)`.
+
+In `PresentationRoot.swift`, I added an `accentColorBundle` parameter with a default value of `Bundle.main`, then passed that bundle into the Material theme color-scheme creation path.
+
+This keeps the existing behavior as the default while making it possible for the app module's bundle to be passed into the accent-color lookup path.
+
+## Testing
+
+After making the changes, I ran:
+
+`git diff --check`
+
+This compeleted without whitespace or formatting errors.
+
+I also ran:
+
+`swift test` 
+
+The test suite passed after the implementation changes.
+
+## Current Status
+
+The first implementation checkpoint compiles and passes the existing test suite. Before opening a pull request, I still need to review whether this API change is enough to fully resolve Issue #431 or whether an additional app/template call-site change is needed so the app module can actually pass `.module` into `PresentationRoot`.
+
+Next, I plan to push the branch to my fork and review the implementation before deciding whether another commit is needed. 
 
 ---
 # Contribution [1]: [Cannot parse custom colors whose .colorset uses Hex values]
