@@ -2,10 +2,10 @@
 
 ## Contribution [2]: [`assetAccentColor` doesn't search for `AccentColor` in my module's bundle]
 
-**Contribution Number:** [2]
-**Student:** [Harsh Sabu]
-**Issue:** [skiptools/skip-ui#431](https://github.com/skiptools/skip-ui/issues/431)
-**Status:** [Phase II Complete] [Ready For III]
+**Contribution Number:** [2]  
+**Student:** [Harsh Sabu]  
+**Issue:** [skiptools/skip-ui#431](https://github.com/skiptools/skip-ui/issues/431)  
+**Status:** [Phase II Complete] [Ready for Phase III]
 
 ---
 
@@ -13,13 +13,15 @@
 
 For Week 5, I began the issue selection process for my second contribution cycle.
 
-After my first contribution to SkipUI was successfully merged, I wanted to stay with the same project instead of starting over in a completely unfamiliar codebase. CodePath encouraged us to consider issues from a project's existing issue list, especially when continuing with the same project, or maintainers could help us build stronger open-source relationships.
+After my first contribution to SkipUI was successfully merged, I wanted to stay with the same project instead of starting over in a completely unfamiliar codebase. CodePath encouraged us to consider issues from a project's existing issue list, especially when continuing with the same project or maintainers could help us build stronger open-source relationships.
 
 I found SkipUI Issue #431, which reports that `assetAccentColor` searches `Bundle.main` instead of the module bundle where the documentation tells developers to place the Android `AccentColor` resource.
 
 Because Issue #431 is not part of the provided CodePath issue spreadsheet, I posted in the course Slack channel asking an instructor or TA to review the issue and confirm that it is appropriate for the course. I also commented on the GitHub issue to express interest and explain that I recently contributed to the same general area of SkipUI's color and asset code.
 
-At the time of this Week 5 check-in, the issue is **pending CodePath approval**. I have not treated it as my officially approved second issue or started implementation yet.
+At the time of this Week 5 check-in, the issue was **pending CodePath approval**. I had not treated it as my officially approved second issue or started implementation yet.
+
+---
 
 ## Issue Approval Update
 
@@ -27,119 +29,9 @@ On July 8, 2026, my CodePath instructor reviewed and approved SkipUI Issue #431 
 
 Because the issue came from SkipUI's existing issue list rather than the provided CodePath spreadsheet, I waited for course approval before officially moving forward with it. Now that the issue has been approved, Phase I is complete, and I am beginning Phase II.
 
-The issue is still open, and I have already commented on the GitHub issue to express interest. My next goal is to move quickly through reproduction and root-cause analysis so I can begin implementation without stretching this contribution across the rest of the course.
+The issue is still open, and I have already commented on the GitHub issue to express interest.
 
-I would like to complete Issue #431 early enough to attempt another SkipUI contribution before the course ends. My current plan is to finish this issue first and then, if it is still available, investigate Issue #246 as a possible third contribution.
-
-## Phase II Progress Update
-
-After Issue #431 was approved by my CodePath Instructor, I moved into Phase II by updating my local SkipUI fork and creating a fresh working branch for the issue.
-
-### Repository Setup
-
-I started from my previous local `skip-ui` clone, which was still on my old `fix-issue-146` branch from my first contribution. Before beginning new work, I confirmed that the working tree was clean.
-
-I then added the official SkipUI repository as an `upstream` remote:
-" ```bash "
-git remote add upstream https://github.com/skiptools/skip-ui.git
-
-After fetching from `upstream`, I switched back to `main`, fast-forwarded my local branch to match `upstream/main`, pushed the updated `main` branch to my fork, and created a new brnach for this issue:
-`git switch main`
-`git switch``git merge --ff-only upstream/main`
-`git push origin main`
-`git switch -c fix-issue-431`
-
-This gave me a clean brnach for Issue #431 based on the latest official SkipUI code.
-
-## Root Cause Investigation
-
-I began by inspceting the current `assetAccentColor` implementation in:
-`Sources/SkipUI/SkipUI/Color/Color.swift`
-
-The current implementation hard-coded `Bundle.main` in two places:
-`let colorInfo = rememberCachedAsset(namedColorCache, AssetKey(name: name, bundle: Bundle.main)) { _ in assetColorInfo(name: name, bundle: Bundle.main)
-}`
-
-This confirmed the main problem described in the GitHub issue: assetAcccentColor searches Bundle.main, even though the documentation tells developers to place Android AccenColor resources in the app module's resource catalog.
-
-I then compared this with the normal named-color initializer:
-`public init(_ name: String, bundle: Bundle?? = nil)
-
-That initializer allows callers to pass a specific bundle, such as .module, and then uses that bundle when looking up the named color asset. This showed that regular named colors already have a path for module-specific assets, but `assetAccentColor` currently does not.
-
-## Call Chain Tracing
-
-I searched for all uses of assetAccentColor and found that it is only called from:
-`Sources/SkipUI/SkipUI/Color/ColorScheme.swift`
-
-Inside `ColorScheme.asMaterialTheme()`, SkipUI calls:
-`color.assetAccentColor(colorScheme: ...)`
-
-At that point, the method had access to Android context, dark/light mode, and Material color scheme values, but it does not have access to the application module's `Bundle`.
-
-I also inspected:
-`Source/SkipUI/SkipUI/Containers/PresentationRoot.swift`
-`Sources/SkipUI/SkipUI/Compose/ComposeContext.swift`
-
-`PresentationRoot` is the root rendering function that creates the Material theme, but its current parameters do not include a bundle. `ComposeContext` also does not contain any bundle, resource, or module information. This means the correct module is not currently being passed through the rendering path.
-
-## Asset Lookup Investigation
-
-I inspected the asset lookup helper in:
-`Sources/SkipUI/SkipUI/System/Assets.swift`
-
-The helper assetContentsURLs(Name:bundle:) searcehs the `resourcesIndex` for the specific bundle it is given. It does not search multiple bundles or automatically discover the app module bundle. 
-
-This means the failure path is:
-
-ColorScheme.asMaterialTheme()
-      ↓
-Color.assetAccentColor(...)
-      ↓
-Bundle.main is hard coded
-      ↓
-assetColorInfor(..., bundle: Bundle.main)
-      ↓
-assetContentsURLs(..., bundle: Bundle.main)
-      ↓
-only Bundle.main is searched
-      ↓
-AccentColor in the app module bundle is not found
-
-## Documentation Check
-
-I also checked the SkipUI README documentation for colors. The documentation says Android accent colors should be places in the app module resource catalog:
-`Sources/<YourAppModule>/Resources/Module`
-
-The same section explains that named colors use module resources and that developers should specify the `bundle` parameters explicitly for named colors because Skip projects use per-module resources rather than assuming `Bundle.main`.
-
-This helped confirm that the code and documentation are currently mismatched for `Accentcolor`.
-
-## Text Fixture Search
-
-I searched the repository for existing fixtures or examples involving:
-`Module.xcassets`
-`Resources/Module`
-`.colorset`
-`AccentColor`
-`assetColorInfo`
-
-The results showed documentation references and implementation code, but I did not find an existing `AccentColor.colorset` fixture or targeted test for `assetColorInfo`.
-
-Because there does no appear to be an existing test fixture for this exact behavior, I may need to either add a small targated test fixture, reproduce the issue in a sample Skip app, or explain the limitation clearly in the PR if the fix is straightforward but difficult to cover with the current test setup.
-
-## Baseline Test Run
-
-Before making implementation changes, I ran the existing test suite from the clean `fix-issue-431` branch:
-`swift.test`
-
-The baseline test run passed succefully before any code changes. This gives me a clean starting point for Phase III.
-
-## Phase II Conclusion
-
-My current understanding is that the bug is not in the color parsing logic itself. The issue is that `assetAccentColor` does not receive or use the app module bundle, even though the documented Android `AccentColor` resource belongs in that module.
-
-The likely implementation direction is to pass a bundle through the accent-color material-theme path while preserving `Bundle.main` as the default behavior for exxisting callers. I will confirm the smallest safe API change during Phase III before opening a pull request.
+My next goal is to move quickly through reproduction and root-cause analysis so I can begin implementation without stretching this contribution across the rest of the course. I would like to complete Issue #431 early enough to attempt another SkipUI contribution before the course ends. My current plan is to finish this issue first and then, if it is still available, investigate Issue #246 as a possible third contribution.
 
 ---
 
@@ -153,50 +45,241 @@ I also wanted to continue contributing to SkipUI while the repository structure,
 
 ---
 
-## Initial Understanding of the Issue
+## Phase II Progress Update
 
-SkipUI's documentation tells developers that an Android `AccentColor` resource can be placed in the application module's resource catalog.
+After Issue #431 was approved by my CodePath instructor, I moved into Phase II by updating my local SkipUI fork and creating a fresh working branch for the issue.
 
-The issue report points out that the current `assetAccentColor` implementation searches for the asset using `Bundle.main`. According to the report, this means a developer can follow the documented resource setup but still have the generated Android application fail to find the `AccentColor` because the implementation is searching a different bundle.
+### Repository Setup
 
-My initial investigation suggests that the relevant areas may include:
+I started from my previous local `skip-ui` clone, which was still on my old `fix-issue-146` branch from my first contribution. Before beginning new work, I confirmed that the working tree was clean.
 
-* `Sources/SkipUI/SkipUI/Color/Color.swift`
-* `assetAccentColor`
-* `AssetKey`
-* `namedColorCache`
-* `assetColorInfo`
-* module bundle and resource lookup behavior
+I then added the official SkipUI repository as an `upstream` remote:
 
-I am intentionally not assuming that the solution is simply to replace `Bundle.main` with another value. If the issue is approved, I first want to reproduce the behavior and understand how other named colors and module resources locate the correct bundle.
+```bash
+git remote add upstream https://github.com/skiptools/skip-ui.git
+```
+
+After fetching from `upstream`, I switched back to `main`, fast-forwarded my local branch to match `upstream/main`, pushed the updated `main` branch to my fork, and created a new branch for this issue:
+
+```bash
+git switch main
+git merge --ff-only upstream/main
+git push origin main
+git switch -c fix-issue-431
+```
+
+This gave me a clean branch for Issue #431 based on the latest official SkipUI code.
+
+**Working branch:** [`fix-issue-431`](https://github.com/haaaaaaarshs/skip-ui/tree/fix-issue-431)
 
 ---
-## Original Phase II Plan
 
-Now that Issue #431 has been approved, I will begin the reproduction and planning phase.
+## Reproduction and Investigation
 
-My immediate steps are:
+### Expected Behavior
 
-1. Update my local SkipUI fork with the latest changes from `skiptools/skip-ui:main`.
-2. Create a dedicated branch for Issue #431.
-3. Confirm that the current implementation still searches for `AccentColor` using `Bundle.main`.
-4. Trace how regular named colors resolve a module bundle when using `Color(_:bundle:)`.
-5. Investigate how Skip and Swift Package Manager expose module resources through `Bundle.module`.
-6. Determine how `assetAccentColor` can access the correct application module bundle without making assumptions that break other SkipUI users.
-7. Identify an appropriate way to reproduce and test the bug before changing the implementation.
+When an Android `AccentColor` resource is placed in the app module's documented resource catalog, SkipUI should find that color and use it as the Material theme's primary color.
 
-### Questions I Need to Answer
+### Actual Behavior
 
-Before writing the fix, I want to understand:
+The current `assetAccentColor` implementation searches `Bundle.main`, even though the documentation tells developers to place the Android `AccentColor` resource in the app module's resource catalog. As a result, an app can follow the documented setup and still have SkipUI fail to find the Android `AccentColor`.
 
-* Why does `assetAccentColor` currently use `Bundle.main`?
-* Where is `assetAccentColor` called, and what context is available at that point?
-* How does a normal named color receive the correct module bundle?
-* Can the application module bundle be passed into the accent-color lookup flow?
-* Does the cache key also need to use the correct bundle?
-* Is there an existing SkipUI test application or test fixture where an `AccentColor` resource can be added for reproduction?
+### Steps I Followed
 
-I will document the root cause and proposed implementation before moving into Phase III.
+1. Updated my fork to the latest `skiptools/skip-ui:main`.
+2. Created a fresh branch named `fix-issue-431`.
+3. Opened `Sources/SkipUI/SkipUI/Color/Color.swift`.
+4. Located the `assetAccentColor` implementation.
+5. Compared `assetAccentColor` with the normal named-color initializer, `Color(_:bundle:)`.
+6. Searched the repository for all callers of `assetAccentColor`.
+7. Traced the call from `ColorScheme.asMaterialTheme()` into `Color.assetAccentColor(...)`.
+8. Inspected `PresentationRoot` and `ComposeContext` to check whether the app module bundle is currently passed through the rendering path.
+9. Inspected the asset lookup helper in `Sources/SkipUI/SkipUI/System/Assets.swift`.
+10. Searched for existing test fixtures or examples involving `AccentColor`, `Module.xcassets`, `Resources/Module`, `.colorset`, and `assetColorInfo`.
+
+---
+
+## Root Cause Investigation
+
+I began by inspecting the current `assetAccentColor` implementation in:
+
+```text
+Sources/SkipUI/SkipUI/Color/Color.swift
+```
+
+The current implementation hard-codes `Bundle.main` in two places:
+
+```swift
+let colorInfo = rememberCachedAsset(namedColorCache, AssetKey(name: name, bundle: Bundle.main)) { _ in
+    assetColorInfo(name: name, bundle: Bundle.main)
+}
+```
+
+This confirmed the main problem described in the GitHub issue: `assetAccentColor` searches `Bundle.main`, even though the documentation tells developers to place Android `AccentColor` resources in the app module's resource catalog.
+
+I then compared this with the normal named-color initializer:
+
+```swift
+public init(_ name: String, bundle: Bundle? = nil)
+```
+
+That initializer allows callers to pass a specific bundle, such as `.module`, and then uses that bundle when looking up the named color asset. This showed that regular named colors already have a path for module-specific assets, but `assetAccentColor` currently does not.
+
+---
+
+## Call Chain Tracing
+
+I searched for all uses of `assetAccentColor` and found that it is only called from:
+
+```text
+Sources/SkipUI/SkipUI/Color/ColorScheme.swift
+```
+
+Inside `ColorScheme.asMaterialTheme()`, SkipUI calls:
+
+```swift
+Color.assetAccentColor(colorScheme: ...)
+```
+
+At that point, the method has access to Android context, dark/light mode, and Material color scheme values, but it does not have access to the application module's `Bundle`.
+
+I also inspected:
+
+```text
+Sources/SkipUI/SkipUI/Containers/PresentationRoot.swift
+Sources/SkipUI/SkipUI/Compose/ComposeContext.swift
+```
+
+`PresentationRoot` is the root rendering function that creates the Material theme, but its current parameters do not include a bundle. `ComposeContext` also does not contain any bundle, resource, or module information. This means the correct module bundle is not currently being passed through the rendering path.
+
+---
+
+## Asset Lookup Investigation
+
+I inspected the asset lookup helper in:
+
+```text
+Sources/SkipUI/SkipUI/System/Assets.swift
+```
+
+The helper `assetContentsURLs(name:bundle:)` searches the `resourcesIndex` for the specific bundle it is given. It does not search multiple bundles or automatically discover the app module bundle.
+
+This means the failure path is:
+
+```text
+ColorScheme.asMaterialTheme()
+    ↓
+Color.assetAccentColor(...)
+    ↓
+Bundle.main is hard-coded
+    ↓
+assetColorInfo(..., bundle: Bundle.main)
+    ↓
+assetContentsURLs(..., bundle: Bundle.main)
+    ↓
+only Bundle.main is searched
+    ↓
+AccentColor in the app module bundle is not found
+```
+
+---
+
+## Documentation Check
+
+I also checked the SkipUI README documentation for colors.
+
+The documentation says Android accent colors should be placed in the app module resource catalog:
+
+```text
+Sources/<YourAppModule>/Resources/Module
+```
+
+The same section explains that named colors use module resources and that developers should specify the `bundle` parameter explicitly for named colors because Skip projects use per-module resources rather than assuming `Bundle.main`.
+
+This helped confirm that the code and documentation are currently mismatched for `AccentColor`.
+
+---
+
+## Test Fixture Search
+
+I searched the repository for existing fixtures or examples involving:
+
+```text
+Module.xcassets
+Resources/Module
+.colorset
+AccentColor
+assetColorInfo
+```
+
+The results showed documentation references and implementation code, but I did not find an existing `AccentColor.colorset` fixture or targeted test for `assetColorInfo`.
+
+Because there does not appear to be an existing test fixture for this exact behavior, I may need to either add a small targeted test fixture, reproduce the issue in a sample Skip app, or explain the limitation clearly in the PR if the fix is straightforward but difficult to cover with the current test setup.
+
+---
+
+## Baseline Test Run
+
+Before making implementation changes, I ran the existing test suite from the clean `fix-issue-431` branch:
+
+```bash
+swift test
+```
+
+The baseline test run passed successfully before any code changes. This gives me a clean starting point for Phase III.
+
+---
+
+## Phase II Conclusion
+
+My current understanding is that the bug is not in the color parsing logic itself. The issue is that `assetAccentColor` does not receive or use the app module bundle, even though the documented Android `AccentColor` resource belongs in that module.
+
+The likely implementation direction is to pass a bundle through the accent-color material-theme path while preserving `Bundle.main` as the default behavior for existing callers. I will confirm the smallest safe API change during Phase III before opening a pull request.
+
+---
+
+## Phase II Plan Using the UMPIRE Framework
+
+### Understand
+
+SkipUI documents Android `AccentColor` as a module resource, but the current implementation searches `Bundle.main`. Since Skip projects use per-module resources, this means the documented Android `AccentColor` may not be found.
+
+### Match
+
+This issue is similar to my first contribution because it is still related to color asset loading, but it is a step up in scope. My first issue focused on parsing component values inside a `.colorset` file. This issue focuses on how the correct bundle reaches the asset lookup system.
+
+### Plan
+
+My current plan for Phase III is to keep the fix as small and focused as possible:
+
+1. Add a bundle parameter to the accent-color lookup path.
+2. Preserve `Bundle.main` as the default value for backward compatibility.
+3. Use the passed bundle in both the `AssetKey` cache key and the `assetColorInfo` lookup.
+4. Thread the bundle through the Material theme path only where needed.
+5. Avoid unrelated refactoring or broader changes to the asset system.
+6. Run the full test suite again after implementation.
+
+### Implement
+
+Implementation will happen in Phase III on the branch:
+
+```text
+fix-issue-431
+```
+
+### Review
+
+Before opening a PR, I will review the diff to make sure it is scoped only to Issue #431 and does not introduce unrelated formatting or architecture changes.
+
+### Evaluate
+
+I will evaluate the change by running:
+
+```bash
+swift test
+```
+
+I will also check whether the implementation clearly explains how app module resources can reach the `AccentColor` lookup path.
 
 ---
 # Contribution [1]: [Cannot parse custom colors whose .colorset uses Hex values]
