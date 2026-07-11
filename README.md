@@ -27,9 +27,9 @@ At the time of this Week 5 check-in, the issue was **pending CodePath approval**
 
 On July 8, 2026, my CodePath instructor reviewed and approved SkipUI Issue #431 for my second contribution cycle.
 
-Because the issue came from SkipUI's existing issue list rather than the provided CodePath spreadsheet, I waited for course approval before officially moving forward with it. Now that the issue has been approved, Phase I is complete, and I am beginning Phase II.
+Because the issue came from SkipUI's existing issue list rather than the provided CodePath spreadsheet, I waited for course approval before officially moving forward with it. Now that the issue has been approved, Phase I is complete, and I have moved into Phase II.
 
-The issue is still open, and I have already commented on the GitHub issue to express interest.
+The issue is still open, and I have already commented on it to express interest.
 
 My next goal is to move quickly through reproduction and root-cause analysis so I can begin implementation without stretching this contribution across the rest of the course. I would like to complete Issue #431 early enough to attempt another SkipUI contribution before the course ends. My current plan is to finish this issue first and then, if it is still available, investigate Issue #246 as a possible third contribution.
 
