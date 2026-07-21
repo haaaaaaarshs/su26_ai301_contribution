@@ -5,7 +5,7 @@
 **Contribution Number:** [2]  
 **Student:** [Harsh Sabu]  
 **Issue:** [skiptools/skip-ui#431](https://github.com/skiptools/skip-ui/issues/431)  
-**Status:** [Phase III In Progress]
+**Status:** [Phase III In Progress] [Implementation Checkpoint Complete — Awaiting Maintainer Guidance]
 
 ---
 
@@ -326,8 +326,144 @@ The first implementation checkpoint compiles and passes the existing test suite.
 Next, I plan to push the branch to my fork and review the implementation before deciding whether another commit is needed. 
 
 ---
-# Contribution [1]: [Cannot parse custom colors whose .colorset uses Hex values]
 
+## Phase III Progress Update
+
+### Implementation Checkpoint
+
+During Phase III, I implemented the first version of the bundle plumbing needed for Issue #431.
+
+The goal of this checkpoint was to remove the hard-coded dependency on `Bundle.main` from the accent-color lookup path while preserving the existing behavior for callers that do not provide another bundle.
+
+### Code Changes
+
+I modified the following files:
+
+```text
+Sources/SkipUI/SkipUI/Color/Color.swift
+Sources/SkipUI/SkipUI/Color/ColorScheme.swift
+Sources/SkipUI/SkipUI/Containers/PresentationRoot.swift
+```
+I also added the required Foundation imports so that the affected field could reference `Bundle`.
+
+**Color.assetAccentColor**
+`Color.assetAccentColor` now accepts a bundle parameter with a backward-compatible default:
+
+`bundle: Bundle = Bundle.main`
+
+The supplied bundle is used in both parts of the asset lookup:
+1. The `AssetKey` used by the named-color cache.
+2. 2. The `assetColorInfo(name:bundle:)` lookup
+  
+This is important because caching an asset under the wrong bundle could still return incorrect results even if the lookup itself used the correct bundle. 
+
+**ColorScheme.asMaterialTheme**  
+`ColorScheme.asMaterialTheme()` now accepts:
+
+`accentColorBundle: Bundle = Bundle.main`
+
+It passes that bundle into `Color.assetAccentColor(...)`.
+
+**PresentationRoot**
+
+`PresentationRoot` now accepts:
+`accentColorBundle: Bundle = Bundle.main`
+
+It passes that bundle into the Material colro-scheme conversion path. 
+
+keeping `Bundle.main` as the default preserves the existing API behavior while creating a apath for callers to provide a module-specific budnle.
+
+## Current Branch
+
+My active development branch is:
+
+[fix-issue-431](https://github.com/haaaaaaarshs/skip-ui/tree/fix-issue-431)
+
+The implementation checkpoint has been committed and pushed to this branch.
+
+## Testing Strategy
+
+After making the implementation changes, I ran the full existing Swift test suite:
+
+`swift test`
+
+The test suite passed successfully.
+
+This confirms that the new parameters and Foundation imports compile correctly and that the existing Swift tests do not regress under the updated API.
+
+I have not yet added a targeted end-to-end AccentColor bundle test. During Phase II, I found that the repository does not currently contain an AccentColor.colorset fixture or a targeted test setup for this exact resource-loading path.
+
+## Self-Review
+
+I reviewed the implementation with Claude as a code-review assistant rather than asking it to rewrite the solution.
+
+The review found that the bundle plumbing is internally consistent:
+
+`PresentationRoot
+    ↓
+ColorScheme.asMaterialTheme
+    ↓
+Color.assetAccentColor
+    ↓
+assetColorInfo`
+
+However, the review also identified an important limitation: no real application-level call site currently passes the consuming module's bundle, such as `.module`.
+
+Because every new parameter defaults to `Bundle.main`, the implementation creates the required API path but does not yet prove that an app-generated `PresentationRootView` will supply the correct module bundle.
+
+## Call-Site Investigation
+
+I searched the repository for all uses of:
+
+`PresentationRoot(
+PresentationRootView
+MaterialThemeRootView
+Bundle.module`
+
+The only production `PresentationRoot(...)` call inside `skip-ui` is a nested presentation call in:
+
+`Sources/SkipUI/SkipUI/Layout/Presentation.swift`
+
+`PresentationRootView(context:)` does not appear to be implemented inside this repository. It appears in the README as part of the generated Android `Main.kt` application structure.
+
+This suggests that the final call site may belong to an application template or generated project rather than directly inside `skip-ui`.
+
+I did not pass `.module` from within SkipUI because that could refer to SkipUI's own module bundle rather than the consuming application's module bundle.
+
+## Maintainer Communication
+
+On July 20, 2026, I posted an implementation update and architecture question on Issue #431.
+
+I explained the completed bundle plumbing and asked whether the intended end-to-end solution should:
+
+1. Update the generated application template so that `PresentationRoot` receives the application module bundle, or
+2. Store the application bundle in `ComposeContext` or another shared mechanism so nested presentation roots can reuse it.
+
+I have not opened a pull request yet because I want to confirm the intended application-level call site and avoid expanding the change into another repository without maintainer guidance.
+
+## Challenges Faced
+
+The primary challenge was that the original hard-coded lookup was easy to replace, but identifying where `.module` should actually originate required tracing beyond `Color.swift`.
+
+The app module bundle cannot simply be selected from inside SkipUI because `Bundle.module` is target-specific. Calling it from the wrong target could point to SkipUI's resources rather than the application's resources.
+
+This changed the task from a one-line bundle replacement into an API-plumbing and ownership question.
+
+## Current Evaluation
+
+The implementation currently:
+- Removes the hard-coded bundle from the internal accent-color lookup path.
+- Preserves existing behavior through Bundle.main defaults.
+- Compiles successfully.
+- Passes the existing Swift test suite.
+- Provides an API path for a module bundle.
+- Does not yet have a confirmed application-level call site supplying .module.
+
+**Phase III status**: In progress. The first implementation checkpoint is complete, and I am awaiting  maintainer guidance before deciding whether the final step belongs in SkipUI, an application template, documentation, or shared rendering context.
+
+---
+
+# Contribution [1]: [Cannot parse custom colors whose .colorset uses Hex value]
 **Contribution Number:** [1]  
 **Student:** [Harsh Sabu]  
 **Issue:** [[GitHub issue link](https://github.com/skiptools/skip-ui/issues/146)]  
