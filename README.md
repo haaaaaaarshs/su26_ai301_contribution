@@ -5,7 +5,7 @@
 **Contribution Number:** [2]  
 **Student:** [Harsh Sabu]  
 **Issue:** [skiptools/skip-ui#431](https://github.com/skiptools/skip-ui/issues/431)  
-**Status:** [Phase III In Progress] [Implementation Checkpoint Complete — Awaiting Maintainer Guidance]
+**Status:** [Phase III In Progress] [Awaiting Maintainer Guidance — Follow-Up Sent July 26, 2026]
 
 ---
 
@@ -311,7 +311,7 @@ After making the changes, I ran:
 
 `git diff --check`
 
-This compeleted without whitespace or formatting errors.
+This was completed without whitespace or formatting errors.
 
 I also ran:
 
@@ -344,7 +344,7 @@ Sources/SkipUI/SkipUI/Color/Color.swift
 Sources/SkipUI/SkipUI/Color/ColorScheme.swift
 Sources/SkipUI/SkipUI/Containers/PresentationRoot.swift
 ```
-I also added the required Foundation imports so that the affected field could reference `Bundle`.
+I also added the required Foundation imports so that the affected files could reference `Bundle`.
 
 **Color.assetAccentColor**
 `Color.assetAccentColor` now accepts a bundle parameter with a backward-compatible default:
@@ -369,9 +369,9 @@ It passes that bundle into `Color.assetAccentColor(...)`.
 `PresentationRoot` now accepts:
 `accentColorBundle: Bundle = Bundle.main`
 
-It passes that bundle into the Material colro-scheme conversion path. 
+It passes that bundle into the Material color-scheme conversion path. 
 
-keeping `Bundle.main` as the default preserves the existing API behavior while creating a apath for callers to provide a module-specific budnle.
+keeping `Bundle.main` as the default preserves the existing API behavior while creating a path for callers to provide a module-specific budnle.
 
 ## Current Branch
 
@@ -463,7 +463,85 @@ The implementation currently:
 
 ---
 
-# Contribution [1]: [Cannot parse custom colors whose .colorset uses Hex value]
+## Weekly Progress Check-In - July 26, 2026
+
+### Progress Since the Previous Check-In
+
+Since my previous Phase II checkpoint, I have kept the implementation unchanged while waiting for the maintainers' guidance on the correct application-level call site.
+
+The current implementation already passes a configurable bundle through:
+
+```text
+PresentationRoot
+    ↓
+ColorScheme.asMaterialTheme
+    ↓
+Color.assetAccentColor
+    ↓
+assetColorInfo
+```
+
+However, no application-level call site currently supplies the consuming module's bundle, such as `.module`. Because `Bundle.module` is target-specific, I did not want to add it inside SkipUI without confirming that it would refer to the correct application resource bundle.
+
+## Maintainer Follow-Up
+
+On July 20, 2026, I posted an implementation update and an architecture question on Issue #431.
+
+After approximately one week without a response, I posted a polite follow-up on July 26, 2026, and directly tagged `@dfabulich`, the maintainer who originally opened the issue.
+
+In the follow-up, I summarized the current implementation and asked whether the preferred next step is:
+
+1. Updating the generated application template so it passes the application module bundle into `PresentationRoot`,
+  
+   OR
+
+2. Making the application bundle available through `ComposeContext` or another shared rendering mechanism.
+
+Maintainer discussion: [skiptools/skip-ui Issue #431](https://github.com/skiptools/skip-ui/issues/431?utm_source=chatgpt.com)
+
+##  Current Development Status
+
+My working branch remains:
+
+[fix-issue-431](https://github.com/haaaaaaarshs/skip-ui/tree/fix-issue-431)
+
+No additional code changes were made after the successful test run, so the most recent validation remains:
+
+`swift test`
+
+The test suite passed successfully at the implementation checkpoint.
+
+I have not opened a pull request because the current code creates the bundle-passing API path but does not yet confirm where the consuming application's module bundle should enter that path.
+
+## Current Blocker
+
+The remaining blocker is an architecture and repository-scope decision rather than a compilation error.
+
+The final change may belong in:
+- SkipUI itself,
+- a generated application template,
+- ComposeContext,
+- or accompanying documentation.
+
+Continuing without the maintainer's guidance could result in passing the wrong module bundle or expanding the contribution into another repository unnecessarily.
+
+## Next Step
+
+I will continue once the maintainer confirms the intended source of the application module bundle.
+
+Based on that response, I will either:
+
+1. Complete the remaining call-site or template change and rerun the tests,
+2. Adjust the current implementation to follow the requested architecture, or
+3. Prepare the existing scoped implementation for a pull request if the maintainer confirms that the public bundle parameter is sufficient.
+
+## Weekly status: 
+
+The implementation remains stable and tested. The maintainer has now been directly tagged, and I am awaiting guidance before making further code changes or opening a pull request.
+
+---
+
+# Contribution [1]: [Cannot parse custom colors whose .colorset uses Hex values]
 **Contribution Number:** [1]  
 **Student:** [Harsh Sabu]  
 **Issue:** [[GitHub issue link](https://github.com/skiptools/skip-ui/issues/146)]  
@@ -621,7 +699,7 @@ I validated that the implementation handles the original issue scenario and pres
 - Decimal component strings like `"1.000"` still parse through the existing `Double(...)` path.
 - Invalid or missing RGB values still fall back to `0.0`.
 - Invalid or missing alpha values still fall back to `1.0`.
-- The full project test run completed with no failures after the implementation was updated.
+- The full project test run was completed with no failures after the implementation was updated.
 
 ### Build and Environment Issues Resolved
 
