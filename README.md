@@ -5,8 +5,7 @@
 **Contribution Number:** [2]  
 **Student:** [Harsh Sabu]  
 **Issue:** [skiptools/skip-ui#431](https://github.com/skiptools/skip-ui/issues/431)  
-**Status:** [Phase III In Progress] [Awaiting Maintainer Guidance — Follow-Up Sent July 26, 2026]
-
+**Status:** [Phase IV] [Pull Request Submitted August 3, 2026 — Awaiting Maintainer Review]
 ---
 
 ## Week 5 Check-In
@@ -538,6 +537,106 @@ Based on that response, I will either:
 ## Weekly status: 
 
 The implementation remains stable and tested. The maintainer has now been directly tagged, and I am awaiting guidance before making further code changes or opening a pull request.
+
+---
+
+## Phase IV Pull Request Submission — August 3, 2026
+
+### Decision to Move Forward
+
+After completing the initial implementation, I paused before opening a pull request because I had not confirmed where the consuming application's module bundle should enter the rendering path.
+
+On July 20, 2026, I posted an implementation update and architecture question on Issue #431. After receiving no response, I followed up on July 26 and directly tagged the maintainer who originally opened the issue.
+
+I later showed the issue discussion and my unanswered comments to my CodePath instructor. She advised me to go ahead with the pull request rather than continue waiting for maintainer guidance. Based on that advice, I prepared the existing scoped implementation for review and left the final architectural decision to the SkipUI maintainers.
+
+### Final Preparation
+
+Before opening the pull request, I:
+
+1. Fetched the latest changes from `upstream/main`.
+2. Rebased `fix-issue-431` onto the updated upstream branch.
+3. Reviewed the full branch diff against `upstream/main`.
+4. Corrected an indentation issue found during self-review.
+5. Ran `git diff --check`.
+6. Ran the complete `swift test` suite.
+7. Amended the existing commit and force-pushed the rebased branch using `--force-with-lease`.
+
+I also had to refresh my GitHub command-line authentication before the final push. I installed and authenticated GitHub CLI, configured it for Git operations, and then successfully pushed the finalized branch.
+
+### Final Implementation
+
+The pull request modifies three files:
+
+- `Sources/SkipUI/SkipUI/Color/Color.swift`
+- `Sources/SkipUI/SkipUI/Color/ColorScheme.swift`
+- `Sources/SkipUI/SkipUI/Containers/PresentationRoot.swift`
+
+The implementation:
+
+- Adds a configurable bundle parameter to `Color.assetAccentColor`.
+- Uses the supplied bundle in the `AssetKey` cache key.
+- Uses the supplied bundle in `assetColorInfo(name:bundle:)`.
+- Passes the bundle through `ColorScheme.asMaterialTheme`.
+- Exposes the bundle through `PresentationRoot`.
+- Preserves `Bundle.main` as the default for backward compatibility.
+
+The resulting path is:
+
+```text
+PresentationRoot
+    ↓
+ColorScheme.asMaterialTheme
+    ↓
+Color.assetAccentColor
+    ↓
+assetColorInfo
+```
+This removes the hard-coded dependency on `Bundle.main` from the internal accent-color lookup path and makes it possible for a caller to provide a module-specific bundle.
+
+## Architectural Limitation
+
+The pull request creates the SkipUI-side API path for supplying the correct bundle, but it does not assume where the consuming application's `.module` bundle should originate.
+
+The final application-level integration may belong in:
+
+- A generated application template
+- `ComposeContext`
+- Another shared rendering mechanism
+- A separate companion change requested by the maintainers
+
+I explained this limitation directly in the pull request rather than presenting the current implementation as a confirmed end-to-end solution. The maintainers can now decide whether the current API is sufficient or whether they want an additional call-site or template update.
+
+## Final Testing
+
+I ran:
+`git diff --check`
+`swift test`
+
+`git diff --check` completed without errors.
+
+The final test results were:
+JUNIT SUITES 9
+TESTS 92
+PASSED 87
+FAILED 0
+SKIPPED 5
+
+The completed test run finished successfully with zero failures.
+
+## Pull Request
+
+Pull Request: [Allow accent color lookup to use supplied bundle](https://github.com/skiptools/skip-ui/pull/504)
+
+Working Branch: https://github.com/haaaaaaarshs/skip-ui/tree/fix-issue-431
+
+Related Issue: https://github.com/skiptools/skip-ui/issues/431
+
+## Current Status
+
+Pase IV has been submitted.
+
+The implementation is committed, tested, pushed, and open as a pull request. It is now awaiting maintainer review. The maintainers may merge the scoped bundle-plumbing change, request a companion application-level change, or recommend a different integration point.
 
 ---
 
